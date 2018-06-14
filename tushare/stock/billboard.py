@@ -158,88 +158,6 @@ def _cap_tops(last=5, pageNo=1, retry_count=3, pause=0.001, dataArr=pd.DataFrame
         except Exception as e:
             print(e)
             
-def lhb_detail(code=None, date=None, retry_count=3, pause=0.001):
-    """
-    获取个股龙虎榜明细数据
-    Parameters
-    --------
-        code:str
-                股票代码
-        date:str
-                日期
-        retry_count : int, 默认 3
-                     如遇网络等问题重复执行的次数
-        pause : int, 默认 0
-                    重复请求数据过程中暂停的秒数，防止请求间隔时间太短出现的问题
-    Return
-    ------
-    tuple(DataFrame1,DateFrame2)
-    DataFrame
-        id：代码_日期_序号(1-5)
-        broker：营业部名称
-        count：上榜次数
-        probability：买入后上涨概率
-        buy：买入金额(万)
-        buy_prop:买入额占总成交比
-        sell：卖出金额(万)
-        sell_prop：卖出额占总成交比
-        net：净额(万)
-    """
-    df1 = None
-    df2 = None
-    for _ in range(retry_count):
-        time.sleep(pause)
-
-        try:
-            request = Request(rv.LHB_DETAIL % (date, code))
-            text = urlopen(request, timeout=10).read()
-
-
-            text = text.decode('GBK')
-            html = lxml.html.parse(StringIO(text))
-            res = html.xpath("//tbody")
-            if ct.PY3:
-                sarr = [etree.tostring(node).decode('utf-8') for node in res]
-            else:
-                sarr = [etree.tostring(node) for node in res]
-            sarr.pop(0)
-            sarr = ''.join(sarr)
-            sarr = sarr.replace('tbody', 'table')
-            list_sarr = pd.read_html(sarr)
-
-
-            for i in range(len(list_sarr)):
-                df = list_sarr[i]
-                if i==0:
-                    flag='buy'
-                elif i==1:
-                    flag='sell'
-                df[0] = ["%s_%s_%s_%s" % (code, date, flag ,i) for i in df[0]]
-                df[0]=df[0].map(lambda x: '%.24s'%x)
-
-
-
-
-                df[1] = df[1].map(lambda x: x.split("  "))
-                try:
-                    ser1 = df[1].map(lambda x: x[0])
-                    ser2 = df[1].map(lambda x: x[1])
-                    ser3 = df[1].map(lambda x: x[2])
-                except:
-                    pass
-                del df[1]
-                df.insert(1, 'company', ser1)
-                df.insert(2, 'count', ser2)
-                df.insert(3, 'per', ser3)
-                df.columns = rv.LHB_DETAIL_COLS
-                if i==0:
-                    df1=df
-                elif i==1:
-                    df2=df
-            return df1,df2
-        except Exception as e:
-            print(e)
-
 
 def broker_tops(days= 5, retry_count= 3, pause= 0.001):
     """
@@ -425,4 +343,87 @@ def _f_rows(x):
         for i in range(1, 6):
             x[i] = np.NaN
     return x
+
+#self
+def lhb_detail(code=None, date=None, retry_count=3, pause=0.001):
+    """
+    获取个股龙虎榜明细数据
+    Parameters
+    --------
+        code:str
+                股票代码
+        date:str
+                日期
+        retry_count : int, 默认 3
+                     如遇网络等问题重复执行的次数
+        pause : int, 默认 0
+                    重复请求数据过程中暂停的秒数，防止请求间隔时间太短出现的问题
+    Return
+    ------
+    tuple(DataFrame1,DateFrame2)
+    DataFrame
+        id：代码_日期_序号(1-5)
+        broker：营业部名称
+        count：上榜次数
+        probability：买入后上涨概率
+        buy：买入金额(万)
+        buy_prop:买入额占总成交比
+        sell：卖出金额(万)
+        sell_prop：卖出额占总成交比
+        net：净额(万)
+    """
+    df1 = None
+    df2 = None
+    for _ in range(retry_count):
+        time.sleep(pause)
+
+        try:
+            request = Request(rv.LHB_DETAIL % (date, code))
+            text = urlopen(request, timeout=10).read()
+
+
+            text = text.decode('GBK')
+            html = lxml.html.parse(StringIO(text))
+            res = html.xpath("//tbody")
+            if ct.PY3:
+                sarr = [etree.tostring(node).decode('utf-8') for node in res]
+            else:
+                sarr = [etree.tostring(node) for node in res]
+            sarr.pop(0)
+            sarr = ''.join(sarr)
+            sarr = sarr.replace('tbody', 'table')
+            list_sarr = pd.read_html(sarr)
+
+
+            for i in range(len(list_sarr)):
+                df = list_sarr[i]
+                if i==0:
+                    flag='buy'
+                elif i==1:
+                    flag='sell'
+                df[0] = ["%s_%s_%s_%s" % (code, date, flag ,i) for i in df[0]]
+                df[0]=df[0].map(lambda x: '%.24s'%x)
+
+
+
+
+                df[1] = df[1].map(lambda x: x.split("  "))
+                try:
+                    ser1 = df[1].map(lambda x: x[0])
+                    ser2 = df[1].map(lambda x: x[1])
+                    ser3 = df[1].map(lambda x: x[2])
+                except:
+                    pass
+                del df[1]
+                df.insert(1, 'company', ser1)
+                df.insert(2, 'count', ser2)
+                df.insert(3, 'per', ser3)
+                df.columns = rv.LHB_DETAIL_COLS
+                if i==0:
+                    df1=df
+                elif i==1:
+                    df2=df
+            return df1,df2
+        except Exception as e:
+            print(e)
 
