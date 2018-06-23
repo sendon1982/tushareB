@@ -407,7 +407,7 @@ def lhb_detail(code=None, date=None, retry_count=3, pause=0.001):
 
 
 
-                df[1] = df[1].map(lambda x: x.split("  "))
+                df[1] = df[1].map(lambda x: str(x).split("  "))
                 try:
                     ser1 = df[1].map(lambda x: x[0])
                     ser2 = df[1].map(lambda x: x[1])
@@ -418,7 +418,16 @@ def lhb_detail(code=None, date=None, retry_count=3, pause=0.001):
                 df.insert(1, 'company', ser1)
                 df.insert(2, 'count', ser2)
                 df.insert(3, 'per', ser3)
-                df.columns = rv.LHB_DETAIL_COLS
+                if len(df.columns)==9:
+                    df.columns = rv.LHB_DETAIL_COLS
+                elif len(df.columns)==8:        #没有买入卖出机构：
+                    #如何处理
+                    df.insert(5,'None',None)
+                    tempId=df[0][0]
+                    df.loc[0]=None
+                    df.loc[0,'company']='没有卖出机构'
+                    df.loc[0,0]=tempId[:-1]+"0"
+                    df.columns = rv.LHB_DETAIL_COLS
                 if i==0:
                     df1=df
                 elif i==1:
